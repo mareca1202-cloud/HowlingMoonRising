@@ -1,25 +1,14 @@
+🌕 Howling Moon Rising
 
-Installation information
-=======
+A love letter to the werewolf mod community.
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+The original Howling Moon mod was a gem — a deep, immersive lycanthropy experience that let players live out their werewolf fantasies in Minecraft, arguably one of the best of its kind at the time of its release. But time moves on, so does the game. For years, the mod has sat untouched, stranded on older versions with no signs of life.
+This is my way of giving it back.
+Howling Moon Rising is a full remaster of the original mod, rebuilt from the ground up for modern Minecraft. Same spirit, same soul — but updated, improved, and brought back to life for the versions you're actually playing.
+Available for:
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+✅ NeoForge 1.21.1
+🔧 Fabric 1.21.1 (Work in Progress)
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
-
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+This is a personal passion project. I'm not a professional developer — just someone who loves this game and wanted to bring back something special. Bear with me, enjoy the ride, and welcome back to the pack. 🐺
