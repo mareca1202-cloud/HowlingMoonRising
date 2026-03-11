@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.howlingmoon.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
+  "client": [
+    "PlayerSkinMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
