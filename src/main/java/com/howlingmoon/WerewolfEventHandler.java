@@ -10,38 +10,36 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 @EventBusSubscriber(modid = HowlingMoon.MODID)
 public class WerewolfEventHandler {
 
-    // Sincronizar al entrar al mundo
+    // =====================
+    //   LOGIN / RESPAWN
+    // =====================
+
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         syncToClient(player);
-
-        // Si estaba transformado, reaplicar atributos
         WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
         if (cap.isTransformed()) {
             WerewolfAttributeHandler.applyAllModifiers(player, cap);
         }
     }
 
-    // Sincronizar al respawnear o volver de otra dimensión
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         syncToClient(player);
-
-        // Si estaba transformado, reaplicar atributos
         WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
         if (cap.isTransformed()) {
             WerewolfAttributeHandler.applyAllModifiers(player, cap);
         }
     }
 
-    // Conservar datos al morir
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
         if (event.isWasDeath()) {
@@ -49,13 +47,74 @@ public class WerewolfEventHandler {
             WerewolfCapability newCap = event.getEntity().getData(WerewolfAttachment.WEREWOLF_DATA);
 
             newCap.setWerewolf(oldCap.isWerewolf());
-            newCap.setTransformed(false); // Al morir vuelve a forma humana
+            newCap.setTransformed(false);
+            newCap.setMoonForced(false);
             newCap.setLevel(oldCap.getLevel());
             newCap.setExperience(oldCap.getExperience());
             newCap.setUsedAttributePoints(oldCap.getUsedAttributePoints());
             newCap.setAttributeTree(new java.util.HashMap<>(oldCap.getAttributeTree()));
         }
     }
+
+    // =====================
+    //   LUNA LLENA
+    // =====================
+
+    @SubscribeEvent
+    public static void onPlayerTickMoon(PlayerTickEvent.Post event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (player.level().isClientSide()) return;
+
+        // Solo comprobar cada 20 ticks (1 segundo) para no sobrecargar
+        if (player.tickCount % 20 != 0) return;
+
+        WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
+        if (!cap.isWerewolf()) return;
+
+        long dayTime = player.level().getDayTime() % 24000;
+        boolean isNight = dayTime >= 13000 && dayTime <= 23000;
+        boolean isFullMoon = player.level().getMoonPhase() == 0;
+        boolean shouldBeForced = isNight && isFullMoon;
+
+        if (shouldBeForced && !cap.isTransformed()) {
+            // Forzar transformación
+            cap.setTransformed(true);
+            cap.setMoonForced(true);
+            WerewolfAttributeHandler.applyAllModifiers(player, cap);
+            syncToClient(player);
+            player.sendSystemMessage(
+                    net.minecraft.network.chat.Component.literal(
+                            "§c☾ The full moon rises... the beast takes control!"
+                    )
+            );
+        } else if (shouldBeForced && !cap.isMoonForced()) {
+            // Estaba transformado manualmente, marcar como forzado
+            cap.setMoonForced(true);
+            syncToClient(player);
+        } else if (!shouldBeForced && cap.isMoonForced()) {
+            // La noche terminó — destransformar solo si fue forzado por la luna
+            cap.setTransformed(false);
+            cap.setMoonForced(false);
+            WerewolfAttributeHandler.removeAllModifiers(player);
+            syncToClient(player);
+            player.sendSystemMessage(
+                    net.minecraft.network.chat.Component.literal(
+                            "§7The moon sets... you return to yourself."
+                    )
+            );
+        }
+
+        // Re-forzar si intenta destransformarse durante la luna llena
+        if (shouldBeForced && !cap.isTransformed()) {
+            cap.setTransformed(true);
+            WerewolfAttributeHandler.applyAllModifiers(player, cap);
+            syncToClient(player);
+        }
+    }
+
+    // =====================
+    //   XP AL MATAR
+    // =====================
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
@@ -92,6 +151,10 @@ public class WerewolfEventHandler {
 
         syncToClient(player);
     }
+
+    // =====================
+    //   HELPER
+    // =====================
 
     private static void syncToClient(ServerPlayer player) {
         WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);

@@ -2,7 +2,6 @@
 package com.howlingmoon;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.IntTag;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
@@ -26,11 +25,11 @@ public class WerewolfAttachment {
                                     WerewolfCapability cap = new WerewolfCapability();
                                     cap.setWerewolf(tag.getBoolean("isWerewolf"));
                                     cap.setTransformed(tag.getBoolean("isTransformed"));
+                                    cap.setMoonForced(tag.getBoolean("moonForced"));
                                     cap.setLevel(tag.getInt("level"));
                                     cap.setExperience(tag.getInt("experience"));
                                     cap.setUsedAttributePoints(tag.getInt("usedAttributePoints"));
 
-                                    // Leer attributeTree
                                     Map<String, Integer> tree = new HashMap<>();
                                     CompoundTag treeTag = tag.getCompound("attributeTree");
                                     for (String key : treeTag.getAllKeys()) {
@@ -46,11 +45,11 @@ public class WerewolfAttachment {
                                     CompoundTag tag = new CompoundTag();
                                     tag.putBoolean("isWerewolf", cap.isWerewolf());
                                     tag.putBoolean("isTransformed", cap.isTransformed());
+                                    tag.putBoolean("moonForced", cap.isMoonForced());
                                     tag.putInt("level", cap.getLevel());
                                     tag.putInt("experience", cap.getExperience());
                                     tag.putInt("usedAttributePoints", cap.getUsedAttributePoints());
 
-                                    // Guardar attributeTree
                                     CompoundTag treeTag = new CompoundTag();
                                     for (Map.Entry<String, Integer> entry : cap.getAttributeTree().entrySet()) {
                                         treeTag.putInt(entry.getKey(), entry.getValue());

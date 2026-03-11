@@ -6,27 +6,24 @@ import java.util.Map;
 
 public class WerewolfCapability {
 
-    // --- Estado básico ---
     private boolean isWerewolf = false;
     private boolean isTransformed = false;
+    private boolean moonForced = false;
 
-    // --- Sistema de XP y niveles ---
     private int level = 1;
     private int experience = 0;
     private int usedAttributePoints = 0;
 
-    // --- Attribute Tree: guarda el nivel de cada atributo ---
     private Map<String, Integer> attributeTree = new HashMap<>();
-
-    // ========================
-    //   GETTERS / SETTERS
-    // ========================
 
     public boolean isWerewolf() { return isWerewolf; }
     public void setWerewolf(boolean werewolf) { isWerewolf = werewolf; }
 
     public boolean isTransformed() { return isTransformed; }
     public void setTransformed(boolean transformed) { isTransformed = transformed; }
+
+    public boolean isMoonForced() { return moonForced; }
+    public void setMoonForced(boolean moonForced) { this.moonForced = moonForced; }
 
     public int getLevel() { return level; }
     public void setLevel(int level) { this.level = level; }
@@ -37,18 +34,12 @@ public class WerewolfCapability {
     public int getUsedAttributePoints() { return usedAttributePoints; }
     public void setUsedAttributePoints(int points) { this.usedAttributePoints = points; }
 
-    // ========================
-    //   SISTEMA XP / NIVELES
-    // ========================
-
     private static final int LEVEL_CAP = 20;
 
-    /** XP necesaria para subir al siguiente nivel */
     public int expNeededForNextLevel() {
         return 50 + (level * 30);
     }
 
-    /** Añade XP y sube de nivel si corresponde. Solo llamar si isTransformed=true */
     public void addExperience(int amount) {
         if (!isTransformed) return;
         experience += amount;
@@ -61,14 +52,9 @@ public class WerewolfCapability {
         }
     }
 
-    /** Puntos de atributo disponibles = nivel - puntos ya gastados */
     public int getAvailableAttributePoints() {
         return level - usedAttributePoints;
     }
-
-    // ========================
-    //   ATTRIBUTE TREE
-    // ========================
 
     public int getAttributeLevel(WereAttribute attribute) {
         return attributeTree.getOrDefault(attribute.getKey(), 0);
@@ -94,13 +80,10 @@ public class WerewolfCapability {
         usedAttributePoints = 0;
     }
 
-    // ========================
-    //   RESET
-    // ========================
-
     public void reset() {
         isWerewolf = false;
         isTransformed = false;
+        moonForced = false;
         level = 1;
         experience = 0;
         usedAttributePoints = 0;
