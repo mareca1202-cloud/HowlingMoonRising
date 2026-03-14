@@ -1,6 +1,8 @@
 // Copyright (c) 2026 mareca1202. All Rights Reserved.
-package com.howlingmoon;
+package com.howlingmoon.client;
 
+import com.howlingmoon.HMEntities;
+import com.howlingmoon.HowlingMoon;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -11,6 +13,6 @@ public class ClientSetup {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(HMEntities.WEREWOLF.get(), WerewolfRenderer::new);
+        event.registerEntityRenderer(HMEntities.HUNTER.get(), HunterRenderer::new);
     }
 }
