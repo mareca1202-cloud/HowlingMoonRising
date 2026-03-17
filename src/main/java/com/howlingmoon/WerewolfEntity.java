@@ -14,6 +14,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 public class WerewolfEntity extends PathfinderMob implements GeoEntity {
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    public boolean forceMoving = false;
 
     public WerewolfEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -29,8 +30,8 @@ public class WerewolfEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "controller", 0, state -> {
-            if (state.isMoving()) {
+        controllers.add(new AnimationController<>(this, "controller", 5, state -> {
+            if (state.isMoving() || forceMoving) {
                 return state.setAndContinue(RawAnimation.begin().thenLoop("animation.werewolf.walk"));
             }
             return state.setAndContinue(RawAnimation.begin().thenLoop("animation.werewolf.idle"));

@@ -3,6 +3,7 @@ package com.howlingmoon.client;
 
 import com.howlingmoon.HMEntities;
 import com.howlingmoon.HowlingMoon;
+import com.howlingmoon.WerewolfReplacedRenderer;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.resources.PlayerSkin;
