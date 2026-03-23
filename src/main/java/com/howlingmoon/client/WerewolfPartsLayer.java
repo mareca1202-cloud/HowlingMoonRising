@@ -33,16 +33,14 @@ public class WerewolfPartsLayer extends RenderLayer<AbstractClientPlayer, Player
 
         partsModel.animateTail(ageInTicks, limbSwing, limbSwingAmount);
 
-        // Hocico desactivado temporalmente
-        // poseStack.pushPose();
-        // playerModel.getHead().translateAndRotate(poseStack);
-        // partsModel.renderSnout(poseStack, buffer, packedLight, overlay);
-        // poseStack.popPose();
+        poseStack.pushPose();
+        playerModel.getHead().translateAndRotate(poseStack);
+        partsModel.renderSnout(poseStack, buffer, packedLight, overlay);
+        poseStack.popPose();
 
-        // Cola desactivada temporalmente
-        // poseStack.pushPose();
-        // playerModel.body.translateAndRotate(poseStack);
-        // partsModel.renderTail(poseStack, buffer, packedLight, overlay);
-        // poseStack.popPose();
+        poseStack.pushPose();
+        playerModel.body.translateAndRotate(poseStack);
+        partsModel.renderTail(poseStack, buffer, packedLight, overlay);
+        poseStack.popPose();
     }
 }

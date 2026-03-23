@@ -3,12 +3,9 @@ package com.howlingmoon;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 
-@EventBusSubscriber(modid = HowlingMoon.MODID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+
 public class WerewolfKeyBindings {
 
     public static final KeyMapping OPEN_MENU = new KeyMapping(
@@ -25,7 +22,7 @@ public class WerewolfKeyBindings {
             "key.categories.howlingmoonrising"
     );
 
-    @SubscribeEvent
+
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
         event.register(OPEN_MENU);
         event.register(TRANSFORM);
