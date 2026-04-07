@@ -40,15 +40,10 @@ public class WerewolfReplacedRenderer extends GeoReplacedEntityRenderer<Abstract
             float walkSpeed = player.walkAnimation.speed(partialTick);
             float tick = player.tickCount + partialTick;
 
-            // --- CÁLCULO MEJORADO DE LA CABEZA ---
-            // En lugar de confiar en el model.head.yRot que Vanilla a veces trunca,
-            // calculamos el ángulo de giro real de la cabeza respecto al cuerpo.
+            // Lógica Anti-Bloqueo de Cabeza
             float headYaw = Mth.lerp(partialTick, player.yHeadRotO, player.yHeadRot);
             float bodyYaw = Mth.lerp(partialTick, player.yBodyRotO, player.yBodyRot);
-            float netHeadYaw = Mth.wrapDegrees(headYaw - bodyYaw); // Diferencia real
-
-            // Forzamos el clamp normal del cuerpo humano (aprox 50 grados maximo a cada
-            // lado)
+            float netHeadYaw = Mth.wrapDegrees(headYaw - bodyYaw);
             netHeadYaw = Mth.clamp(netHeadYaw, -50.0f, 50.0f);
 
             float headPitch = Mth.lerp(partialTick, player.xRotO, player.getXRot());
@@ -57,8 +52,6 @@ public class WerewolfReplacedRenderer extends GeoReplacedEntityRenderer<Abstract
             model.prepareMobModel(player, walkPos, walkSpeed, partialTick);
             model.setupAnim(player, walkPos, walkSpeed, tick, netHeadYaw, headPitch);
 
-            // X es pitch (arriba/abajo), Y es yaw (izquierda/derecha).
-            // Usamos nuestras variables crudas en Radianes.
             headX = headPitch * ((float) Math.PI / 180F);
             headY = netHeadYaw * ((float) Math.PI / 180F);
             headZ = model.head.zRot;
@@ -93,8 +86,6 @@ public class WerewolfReplacedRenderer extends GeoReplacedEntityRenderer<Abstract
         switch (bone.getName()) {
             case "head_22" -> {
                 bone.setRotX(-headX);
-                // ATENCIÓN AQUÍ: Al haber calculado netHeadYaw puro, solo necesitamos el signo
-                // correcto
                 bone.setRotY(-headY);
                 bone.setRotZ(headZ);
             }

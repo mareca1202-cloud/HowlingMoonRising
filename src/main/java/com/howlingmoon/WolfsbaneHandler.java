@@ -12,36 +12,35 @@ public class WolfsbaneHandler {
 
     @SubscribeEvent
     public static void onItemFinishedUsing(LivingEntityUseItemEvent.Finish event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!(event.getEntity() instanceof ServerPlayer player))
+            return;
 
         ItemStack stack = event.getItem();
-        if (!stack.is(HMItems.WOLFSBANE_POTION.get())) return;
+        if (!stack.is(HMItems.WOLFSBANE_POTION.get()))
+            return;
 
         WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
 
         if (!cap.isWerewolf()) {
             player.sendSystemMessage(
-                    net.minecraft.network.chat.Component.literal(
-                            "§7The potion has no effect on you."
-                    )
-            );
+                    net.minecraft.network.chat.Component.literal("§7The potion has no effect on your human blood."));
             return;
         }
 
-        // Si está transformado, quitar modificadores primero
-        if (cap.isTransformed()) {
-            WerewolfAttributeHandler.removeAllModifiers(player);
-        }
+        // 1. Quitar modificadores físicos antes de resetear
+        WerewolfAttributeHandler.removeAllModifiers(player);
 
-        // Curar completamente — resetear toda la capability
+        // 2. Limpiar todos los efectos secundarios (Night Vision, Luck, etc.)
+        player.removeAllEffects();
+
+        // 3. Reset total de la Capability (Nivel, XP, Skills y SENDA)
         cap.reset();
 
+        // 4. Sincronizar con el cliente
         WerewolfCommand.syncToClient(player, cap);
 
         player.sendSystemMessage(
                 net.minecraft.network.chat.Component.literal(
-                        "§aThe wolfsbane subdues the beast... you are no longer a werewolf."
-                )
-        );
+                        "§aThe wolfsbane purifies your blood... the beast is gone, and your path is reset."));
     }
 }

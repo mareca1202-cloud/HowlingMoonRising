@@ -17,7 +17,13 @@ public class WerewolfClientHandler {
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
+
+        // CORRECCIÓN: Si el juego está pausado (en el menú ESC), no hacemos nada
+        if (mc.isPaused() || mc.player == null)
+            return;
+
+        // Tick cooldowns (ahora solo descuenta si no está pausado)
+        ClientAbilityData.tick();
 
         // Tecla H — abrir menú
         if (WerewolfKeyBindings.OPEN_MENU.consumeClick()) {
@@ -34,9 +40,6 @@ public class WerewolfClientHandler {
                 PacketDistributor.sendToServer(new TransformPacket());
             }
         }
-
-        // Tick cooldowns
-        ClientAbilityData.tick();
 
         // Tecla R — menú radial
         if (WerewolfKeyBindings.OPEN_RADIAL.consumeClick()) {

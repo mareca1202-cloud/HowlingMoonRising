@@ -2,6 +2,8 @@
 package com.howlingmoon;
 
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -19,53 +21,66 @@ public class WerewolfCommand {
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(
                 Commands.literal("werewolf")
-                        .then(Commands.literal("transform")
-                                .executes(WerewolfCommand::transform))
-                        .then(Commands.literal("set")
-                                .executes(WerewolfCommand::setWerewolf))
+                        .requires(source -> source.hasPermission(2)) // Solo OP
+                        .then(Commands.literal("transform").executes(WerewolfCommand::transform))
+                        .then(Commands.literal("set").executes(WerewolfCommand::setWerewolf))
+                        .then(Commands.literal("reset").executes(WerewolfCommand::resetWerewolf))
+                        .then(Commands.literal("setlevel")
+                                .then(Commands.argument("level", IntegerArgumentType.integer(1, 20))
+                                        .executes(WerewolfCommand::setLevel)))
                         .then(Commands.literal("addxp")
-                                .then(Commands.argument("amount",
-                                                com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 1000))
+                                .then(Commands.argument("amount", IntegerArgumentType.integer(1, 10000))
                                         .executes(WerewolfCommand::addXp)))
-                        .then(Commands.literal("stats")
-                                .executes(WerewolfCommand::showStats))
-                        .then(Commands.literal("upgrade")
-                                .then(Commands.argument("attribute",
-                                                com.mojang.brigadier.arguments.StringArgumentType.word())
-                                        .executes(WerewolfCommand::upgradeAttribute)))
-        );
+                        .then(Commands.literal("stats").executes(WerewolfCommand::showStats)));
+    }
+
+    private static int setLevel(CommandContext<CommandSourceStack> ctx) {
+        try {
+            ServerPlayer player = ctx.getSource().getPlayerOrException();
+            WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
+            int newLevel = IntegerArgumentType.getInteger(ctx, "level");
+
+            cap.setWerewolf(true);
+            cap.forceSetLevel(newLevel);
+
+            syncToClient(player, cap);
+            ctx.getSource().sendSuccess(() -> Component.literal("§aNivel de hombre lobo ajustado a: " + newLevel),
+                    true);
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private static int resetWerewolf(CommandContext<CommandSourceStack> ctx) {
+        try {
+            ServerPlayer player = ctx.getSource().getPlayerOrException();
+            WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
+            cap.reset();
+            WerewolfAttributeHandler.removeAllModifiers(player);
+            syncToClient(player, cap);
+            ctx.getSource().sendSuccess(() -> Component.literal("§cProgresión de hombre lobo reiniciada."), true);
+            return Command.SINGLE_SUCCESS;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private static int transform(CommandContext<CommandSourceStack> ctx) {
         try {
             ServerPlayer player = ctx.getSource().getPlayerOrException();
             WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
-
-            if (!cap.isWerewolf()) {
-                ctx.getSource().sendFailure(Component.literal("You are not a werewolf!"));
+            if (!cap.isWerewolf())
                 return 0;
-            }
-
-            if (cap.isTransformed()) {
-                long dayTime = player.level().getDayTime() % 24000;
-                boolean isNight = dayTime >= 13000 && dayTime <= 23000;
-                boolean isFullMoon = player.level().getMoonPhase() == 0;
-                if (isNight && isFullMoon) {
-                    ctx.getSource().sendFailure(Component.literal(
-                            "§c☾ The full moon controls you... you cannot resist the transformation!"));
-                    return 0;
-                }
-            }
 
             boolean nowTransformed = !cap.isTransformed();
             cap.setTransformed(nowTransformed);
-            syncToClient(player, cap);
+            if (nowTransformed)
+                WerewolfAttributeHandler.applyAllModifiers(player, cap);
+            else
+                WerewolfAttributeHandler.removeAllModifiers(player);
 
-            if (nowTransformed) {
-                ctx.getSource().sendSuccess(() -> Component.literal("§6The beast within takes hold!"), false);
-            } else {
-                ctx.getSource().sendSuccess(() -> Component.literal("§7You return to human form..."), false);
-            }
+            syncToClient(player, cap);
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             return 0;
@@ -78,7 +93,7 @@ public class WerewolfCommand {
             WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
             cap.setWerewolf(true);
             syncToClient(player, cap);
-            ctx.getSource().sendSuccess(() -> Component.literal("§aYou are now a werewolf!"), false);
+            ctx.getSource().sendSuccess(() -> Component.literal("§aAhora eres un hombre lobo."), true);
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             return 0;
@@ -89,31 +104,9 @@ public class WerewolfCommand {
         try {
             ServerPlayer player = ctx.getSource().getPlayerOrException();
             WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
-
-            if (!cap.isWerewolf()) {
-                ctx.getSource().sendFailure(Component.literal("You are not a werewolf!"));
-                return 0;
-            }
-            if (!cap.isTransformed()) {
-                ctx.getSource().sendFailure(Component.literal("You must be transformed to gain XP!"));
-                return 0;
-            }
-
-            int amount = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(ctx, "amount");
-            int levelBefore = cap.getLevel();
+            int amount = IntegerArgumentType.getInteger(ctx, "amount");
             cap.addExperience(amount);
-            int levelAfter = cap.getLevel();
-
             syncToClient(player, cap);
-
-            if (levelAfter > levelBefore) {
-                ctx.getSource().sendSuccess(() -> Component.literal(
-                        "§6Level up! Now level " + levelAfter), false);
-            } else {
-                ctx.getSource().sendSuccess(() -> Component.literal(
-                        "§aAdded " + amount + " XP. (" + cap.getExperience()
-                                + "/" + cap.expNeededForNextLevel() + ")"), false);
-            }
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             return 0;
@@ -124,87 +117,9 @@ public class WerewolfCommand {
         try {
             ServerPlayer player = ctx.getSource().getPlayerOrException();
             WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
-
             ctx.getSource().sendSuccess(() -> Component.literal(
-                    "§6--- Werewolf Stats ---\n" +
-                            "§eLevel: §f" + cap.getLevel() + "/20\n" +
-                            "§eXP: §f" + cap.getExperience() + "/" + cap.expNeededForNextLevel() + "\n" +
-                             "§eAttribute Points: §f" + cap.getAvailableAttributePoints() + "\n" +
-                             "§eAbility Points: §f" + cap.getAvailableAbilityPoints() + "\n" +
-                             "§eTransformed: §f" + cap.isTransformed()
-            ), false);
-
-            for (WereAttribute attr : WereAttribute.values()) {
-                int attrLevel = cap.getAttributeLevel(attr);
-                if (attrLevel > 0) {
-                    ctx.getSource().sendSuccess(() -> Component.literal(
-                            "§7" + attr.getKey() + ": §f" + attrLevel + "/" + attr.getMaxLevel()
-                    ), false);
-                }
-            }
-
-            return Command.SINGLE_SUCCESS;
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    private static int upgradeAttribute(CommandContext<CommandSourceStack> ctx) {
-        try {
-            ServerPlayer player = ctx.getSource().getPlayerOrException();
-            WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
-
-            if (!cap.isWerewolf()) {
-                ctx.getSource().sendFailure(Component.literal("You are not a werewolf!"));
-                return 0;
-            }
-
-            String key = com.mojang.brigadier.arguments.StringArgumentType.getString(ctx, "attribute");
-
-            WereAttribute found = null;
-            for (WereAttribute attr : WereAttribute.values()) {
-                if (attr.name().equalsIgnoreCase(key)) {
-                    found = attr;
-                    break;
-                }
-            }
-
-            if (found == null) {
-                ctx.getSource().sendFailure(Component.literal(
-                        "§cUnknown attribute: " + key + "\n§7Valid: " +
-                                java.util.Arrays.stream(WereAttribute.values())
-                                        .map(WereAttribute::name)
-                                        .collect(java.util.stream.Collectors.joining(", "))
-                ));
-                return 0;
-            }
-
-            if (cap.getAvailableAttributePoints() <= 0) {
-                ctx.getSource().sendFailure(Component.literal("§cNo attribute points available!"));
-                return 0;
-            }
-
-            if (!cap.canUpgradeAttribute(found)) {
-                ctx.getSource().sendFailure(Component.literal(
-                        "§c" + found.name() + " is already at max level (" + found.getMaxLevel() + ")!"
-                ));
-                return 0;
-            }
-
-            cap.upgradeAttribute(found);
-            syncToClient(player, cap);
-
-            if (cap.isTransformed()) {
-                WerewolfAttributeHandler.applyAllModifiers(player, cap);
-            }
-
-            WereAttribute finalFound = found;
-            ctx.getSource().sendSuccess(() -> Component.literal(
-                    "§a" + finalFound.name() + " upgraded to level "
-                            + cap.getAttributeLevel(finalFound) + "/" + finalFound.getMaxLevel()
-                            + " §7(" + cap.getAvailableAttributePoints() + " points remaining)"
-            ), false);
-
+                    "§6--- Werewolf Stats ---\n§eLevel: §f" + cap.getLevel() + "\n§eXP: §f" + cap.getExperience()),
+                    false);
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
             return 0;

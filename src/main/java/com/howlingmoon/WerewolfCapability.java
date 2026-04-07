@@ -9,6 +9,7 @@ public class WerewolfCapability {
     private boolean isWerewolf = false;
     private boolean isTransformed = false;
     private boolean moonForced = false;
+    private boolean isLeaping = false;
 
     private int level = 1;
     private int experience = 0;
@@ -21,42 +22,111 @@ public class WerewolfCapability {
     private java.util.Set<Integer> completedTrials = new java.util.HashSet<>();
 
     private Map<String, Integer> attributeTree = new HashMap<>();
-    
-    // NUEVO: Cooldowns locales del jugador para evitar Memory Leaks
     private Map<WereAbility, Integer> cooldowns = new HashMap<>();
 
-    public boolean isWerewolf() { return isWerewolf; }
-    public void setWerewolf(boolean werewolf) { isWerewolf = werewolf; }
+    public boolean isWerewolf() {
+        return isWerewolf;
+    }
 
-    public boolean isTransformed() { return isTransformed; }
-    public void setTransformed(boolean transformed) { isTransformed = transformed; }
+    public void setWerewolf(boolean werewolf) {
+        isWerewolf = werewolf;
+    }
 
-    public boolean isMoonForced() { return moonForced; }
-    public void setMoonForced(boolean moonForced) { this.moonForced = moonForced; }
+    public boolean isTransformed() {
+        return isTransformed;
+    }
 
-    public int getLevel() { return level; }
-    public void setLevel(int level) { this.level = level; }
+    public void setTransformed(boolean transformed) {
+        isTransformed = transformed;
+    }
 
-    public int getExperience() { return experience; }
-    public void setExperience(int experience) { this.experience = experience; }
+    public boolean isMoonForced() {
+        return moonForced;
+    }
 
-    public int getUsedAttributePoints() { return usedAttributePoints; }
-    public void setUsedAttributePoints(int points) { this.usedAttributePoints = points; }
+    public void setMoonForced(boolean moonForced) {
+        this.moonForced = moonForced;
+    }
 
-    public int getUsedAbilityPoints() { return usedAbilityPoints; }
-    public void setUsedAbilityPoints(int points) { this.usedAbilityPoints = points; }
+    public boolean isLeaping() {
+        return isLeaping;
+    }
 
-    public java.util.Set<WereAbility> getUnlockedAbilities() { return unlockedAbilities; }
-    public void setUnlockedAbilities(java.util.Set<WereAbility> abilities) { this.unlockedAbilities = abilities; }
+    public void setLeaping(boolean leaping) {
+        this.isLeaping = leaping;
+    }
 
-    public WereAbility getSelectedAbility() { return selectedAbility; }
-    public void setSelectedAbility(WereAbility ability) { this.selectedAbility = ability; }
+    public int getLevel() {
+        return level;
+    }
 
-    public WereInclination getInclination() { return inclination; }
-    public void setInclination(WereInclination inclination) { this.inclination = inclination; }
+    public void setLevel(int level) {
+        this.level = level;
+    }
 
-    public java.util.Set<Integer> getCompletedTrials() { return completedTrials; }
-    public void setCompletedTrials(java.util.Set<Integer> trials) { this.completedTrials = trials; }
+    public void forceSetLevel(int newLevel) {
+        this.level = Math.max(1, Math.min(newLevel, LEVEL_CAP));
+        this.experience = 0;
+        for (int i = 5; i <= this.level; i += 5) {
+            completeTrial(i);
+        }
+    }
+
+    public int getExperience() {
+        return experience;
+    }
+
+    public void setExperience(int experience) {
+        this.experience = experience;
+    }
+
+    public int getUsedAttributePoints() {
+        return usedAttributePoints;
+    }
+
+    public void setUsedAttributePoints(int points) {
+        this.usedAttributePoints = points;
+    }
+
+    public int getUsedAbilityPoints() {
+        return usedAbilityPoints;
+    }
+
+    public void setUsedAbilityPoints(int points) {
+        this.usedAbilityPoints = points;
+    }
+
+    public java.util.Set<WereAbility> getUnlockedAbilities() {
+        return unlockedAbilities;
+    }
+
+    public void setUnlockedAbilities(java.util.Set<WereAbility> abilities) {
+        this.unlockedAbilities = abilities;
+    }
+
+    public WereAbility getSelectedAbility() {
+        return selectedAbility;
+    }
+
+    public void setSelectedAbility(WereAbility ability) {
+        this.selectedAbility = ability;
+    }
+
+    public WereInclination getInclination() {
+        return inclination;
+    }
+
+    public void setInclination(WereInclination inclination) {
+        this.inclination = inclination;
+    }
+
+    public java.util.Set<Integer> getCompletedTrials() {
+        return completedTrials;
+    }
+
+    public void setCompletedTrials(java.util.Set<Integer> trials) {
+        this.completedTrials = trials;
+    }
 
     public boolean hasCompletedTrialFor(int level) {
         return completedTrials.contains(level);
@@ -73,19 +143,16 @@ public class WerewolfCapability {
     }
 
     public void addExperience(int amount) {
-        if (!isTransformed) return;
+        if (!isTransformed)
+            return;
         experience += amount;
         while (experience >= expNeededForNextLevel() && level < LEVEL_CAP) {
-            // Progression Gate: Only every 5 levels (5, 10, 15)
             if (level % 5 == 0 && !hasCompletedTrialFor(level)) {
                 experience = Math.min(experience, expNeededForNextLevel() - 1);
                 break;
             }
             experience -= expNeededForNextLevel();
             level++;
-        }
-        if (level >= LEVEL_CAP) {
-            experience = 0;
         }
     }
 
@@ -102,12 +169,12 @@ public class WerewolfCapability {
     }
 
     public void unlockAbility(WereAbility ability) {
-        if (!canUnlockAbility(ability)) return;
+        if (!canUnlockAbility(ability))
+            return;
         unlockedAbilities.add(ability);
         usedAbilityPoints += ability.getCost();
-        if (selectedAbility == null) {
+        if (selectedAbility == null)
             selectedAbility = ability;
-        }
     }
 
     public int getAttributeLevel(WereAttribute attribute) {
@@ -115,32 +182,30 @@ public class WerewolfCapability {
     }
 
     public boolean canUpgradeAttribute(WereAttribute attribute) {
-        return getAvailableAttributePoints() > 0
-                && getAttributeLevel(attribute) < attribute.getMaxLevel();
+        return getAvailableAttributePoints() > 0 && getAttributeLevel(attribute) < attribute.getMaxLevel();
     }
 
     public void upgradeAttribute(WereAttribute attribute) {
-        if (!canUpgradeAttribute(attribute)) return;
+        if (!canUpgradeAttribute(attribute))
+            return;
         int current = getAttributeLevel(attribute);
         attributeTree.put(attribute.getKey(), current + 1);
         usedAttributePoints++;
     }
 
-    public Map<String, Integer> getAttributeTree() { return attributeTree; }
-    public void setAttributeTree(Map<String, Integer> tree) { this.attributeTree = tree; }
-
-    public void resetAttributePoints() {
-        attributeTree.clear();
-        usedAttributePoints = 0;
+    public Map<String, Integer> getAttributeTree() {
+        return attributeTree;
     }
 
-    // --- MÉTODOS DE COOLDOWN ---
+    public void setAttributeTree(Map<String, Integer> tree) {
+        this.attributeTree = tree;
+    }
+
     public void setCooldown(WereAbility ability, int ticks) {
-        if (ticks <= 0) {
+        if (ticks <= 0)
             cooldowns.remove(ability);
-        } else {
+        else
             cooldowns.put(ability, ticks);
-        }
     }
 
     public int getCooldown(WereAbility ability) {
@@ -148,31 +213,30 @@ public class WerewolfCapability {
     }
 
     public void tickCooldowns() {
-        if (cooldowns.isEmpty()) return;
+        if (cooldowns.isEmpty())
+            return;
         cooldowns.entrySet().removeIf(entry -> {
             int timeLeft = entry.getValue() - 1;
-            if (timeLeft <= 0) return true;
             entry.setValue(timeLeft);
-            return false;
+            return timeLeft <= 0;
         });
     }
 
-    public Map<WereAbility, Integer> getCooldowns() {
-        return cooldowns;
-    }
-    // ---------------------------
-
+    // --- RESET TOTAL PARA CURACIÓN ---
     public void reset() {
-        isWerewolf = false;
-        isTransformed = false;
-        moonForced = false;
-        level = 1;
-        experience = 0;
-        usedAttributePoints = 0;
-        usedAbilityPoints = 0;
-        unlockedAbilities.clear();
-        selectedAbility = null;
-        attributeTree.clear();
-        cooldowns.clear();
+        this.isWerewolf = false;
+        this.isTransformed = false;
+        this.moonForced = false;
+        this.isLeaping = false;
+        this.level = 1;
+        this.experience = 0;
+        this.usedAttributePoints = 0;
+        this.usedAbilityPoints = 0;
+        this.unlockedAbilities.clear();
+        this.selectedAbility = null;
+        this.inclination = WereInclination.NEUTRAL; // RESET DE SENDA
+        this.attributeTree.clear();
+        this.cooldowns.clear();
+        this.completedTrials.clear();
     }
 }

@@ -5,9 +5,12 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -27,347 +30,274 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @EventBusSubscriber(modid = HowlingMoon.MODID)
 public class WerewolfAttributeHandler {
 
-    private static final ResourceLocation RL_PROTECTION  = rl("were_protection");
-    private static final ResourceLocation RL_SPEED       = rl("were_speed");
-    private static final ResourceLocation RL_KNOCKBACK   = rl("were_knockback");
-    private static final ResourceLocation RL_KNOCKRESIST = rl("were_knockresist");
-    private static final ResourceLocation RL_JUMP        = rl("were_jump");
-    private static final ResourceLocation RL_SCALE       = rl("were_scale");
+    private static final ResourceLocation RL_PROTECTION = ResourceLocation.fromNamespaceAndPath(HowlingMoon.MODID,
+            "were_protection");
+    private static final ResourceLocation RL_SPEED = ResourceLocation.fromNamespaceAndPath(HowlingMoon.MODID,
+            "were_speed");
+    private static final ResourceLocation RL_KNOCKBACK = ResourceLocation.fromNamespaceAndPath(HowlingMoon.MODID,
+            "were_knockback");
+    private static final ResourceLocation RL_KNOCKRESIST = ResourceLocation.fromNamespaceAndPath(HowlingMoon.MODID,
+            "were_knockresist");
+    private static final ResourceLocation RL_JUMP = ResourceLocation.fromNamespaceAndPath(HowlingMoon.MODID,
+            "were_jump");
+    private static final ResourceLocation RL_SCALE = ResourceLocation.fromNamespaceAndPath(HowlingMoon.MODID,
+            "were_scale");
 
-    private static final Set<Holder<MobEffect>> NEGATIVE_EFFECTS = Set.of(
-            MobEffects.POISON,
-            MobEffects.WITHER,
-            MobEffects.BLINDNESS,
-            MobEffects.WEAKNESS,
-            MobEffects.MOVEMENT_SLOWDOWN,
-            MobEffects.HUNGER
-    );
-
-    private static final Set<Item> MEAT_FOODS = Set.of(
-            Items.BEEF, Items.COOKED_BEEF,
-            Items.PORKCHOP, Items.COOKED_PORKCHOP,
-            Items.CHICKEN, Items.COOKED_CHICKEN,
-            Items.MUTTON, Items.COOKED_MUTTON,
-            Items.RABBIT, Items.COOKED_RABBIT,
-            Items.COD, Items.COOKED_COD,
-            Items.SALMON, Items.COOKED_SALMON,
-            Items.TROPICAL_FISH,
-            Items.ROTTEN_FLESH
-    );
-
-    private static final List<String> CARNIVORE_MESSAGES = List.of(
-            "§8[§c⚠§8] §7The beast demands §cflesh§7.",
-            "§8[§7✦§8] §cThis has never been alive§7.",
-            "§8[§c⚠§8] §7Your instincts §creject §7this.",
-            "§8[§7✦§8] §cOnly blood and bone §7will satisfy the wolf.",
-            "§8[§c⚠§8] §7The beast within §csneers §7at this."
-    );
-
-    private static final Random RANDOM = new Random();
-
-    private static ResourceLocation rl(String path) {
-        return ResourceLocation.fromNamespaceAndPath(HowlingMoon.MODID, path);
-    }
+    private static final Set<Holder<MobEffect>> NEGATIVE_EFFECTS = Set.of(MobEffects.POISON, MobEffects.WITHER,
+            MobEffects.BLINDNESS, MobEffects.WEAKNESS, MobEffects.MOVEMENT_SLOWDOWN, MobEffects.HUNGER);
+    private static final Set<Item> MEAT_FOODS = Set.of(Items.BEEF, Items.COOKED_BEEF, Items.PORKCHOP,
+            Items.COOKED_PORKCHOP, Items.CHICKEN, Items.COOKED_CHICKEN, Items.MUTTON, Items.COOKED_MUTTON, Items.RABBIT,
+            Items.COOKED_RABBIT, Items.COD, Items.COOKED_COD, Items.SALMON, Items.COOKED_SALMON, Items.TROPICAL_FISH,
+            Items.ROTTEN_FLESH);
 
     private static final Map<UUID, Boolean> lastTransformState = new HashMap<>();
 
-    // =====================
-    //   TICK DEL JUGADOR
-    // =====================
-
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-
+        if (!(event.getEntity() instanceof ServerPlayer player))
+            return;
         WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
+
         boolean isTransformed = cap.isTransformed();
-        boolean wasTransformed = lastTransformState.getOrDefault(player.getUUID(), false);
-
-        if (isTransformed != wasTransformed) {
+        if (isTransformed != lastTransformState.getOrDefault(player.getUUID(), false)) {
             lastTransformState.put(player.getUUID(), isTransformed);
-            if (isTransformed) {
+            if (isTransformed)
                 applyAllModifiers(player, cap);
-            } else {
+            else
                 removeAllModifiers(player);
-            }
         }
 
-        if (!isTransformed) return;
+        if (!isTransformed)
+            return;
 
+        // Regeneración Pasiva
         if (player.tickCount % 40 == 0) {
-            int regenLevel = cap.getAttributeLevel(WereAttribute.REGENERATION);
-            if (regenLevel > 0 && player.getHealth() < player.getMaxHealth()) {
-                player.heal(regenLevel * 0.5f);
-            }
+            int regen = cap.getAttributeLevel(WereAttribute.REGENERATION);
+            if (regen > 0 && player.getHealth() < player.getMaxHealth())
+                player.heal(regen * 0.5f);
         }
 
+        // Hambre y Metabolismo (Predator disadvantage 15%)
         if (player.tickCount % 20 == 0) {
-            int hungerLevel = cap.getAttributeLevel(WereAttribute.HUNGER);
-            if (hungerLevel > 0) {
-                player.getFoodData().addExhaustion(-(hungerLevel * 0.04f));
+            int metabolism = cap.getAttributeLevel(WereAttribute.HUNGER);
+            if (metabolism > 0) {
+                player.getFoodData().addExhaustion(-(metabolism * 0.04f));
+            }
+            if (cap.getInclination() == WereInclination.PREDATOR) {
+                player.getFoodData().addExhaustion(0.015f); // 15% drain
             }
         }
     }
 
-    // =====================
-    //   STRENGTH + EXHILARATING
-    // =====================
-
+    // Ventaja Mastery: Minado con manos desnudas
     @SubscribeEvent
-    public static void onAttackEntity(AttackEntityEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getPlayer() instanceof ServerPlayer player))
+            return;
         WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
-        if (!cap.isTransformed()) return;
-
-        ItemStack mainHand = player.getMainHandItem();
-
-        int strengthLevel = cap.getAttributeLevel(WereAttribute.STRENGTH);
-        if (strengthLevel > 0 && mainHand.isEmpty()) {
-            if (event.getTarget() instanceof LivingEntity target) {
-                target.hurt(player.damageSources().playerAttack(player), strengthLevel * 3.0f);
+        if (cap.isTransformed() && cap.getInclination() == WereInclination.MASTERY
+                && player.getMainHandItem().isEmpty()) {
+            if (event.getState().is(BlockTags.MINEABLE_WITH_PICKAXE)
+                    || event.getState().is(BlockTags.MINEABLE_WITH_AXE)) {
+                ItemStack fakeIronPick = new ItemStack(Items.IRON_PICKAXE);
+                var drops = net.minecraft.world.level.block.Block.getDrops(event.getState(),
+                        (ServerLevel) event.getLevel(), event.getPos(), null, player, fakeIronPick);
+                drops.forEach(d -> net.minecraft.world.level.block.Block.popResource((ServerLevel) event.getLevel(),
+                        event.getPos(), d));
             }
         }
-
-
-        int exhilaratingLevel = cap.getAttributeLevel(WereAttribute.EXHILARATING);
-        if (exhilaratingLevel > 0 && event.getTarget() instanceof LivingEntity) {
-            player.heal(exhilaratingLevel * 0.5f);
-        }
     }
-
-    // =====================
-    //   RESISTANCE
-    // =====================
-
-    @SubscribeEvent
-    public static void onIncomingDamage(LivingIncomingDamageEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-
-        WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
-        if (!cap.isTransformed()) return;
-
-        int resistanceLevel = cap.getAttributeLevel(WereAttribute.RESISTANCE);
-        if (resistanceLevel > 0) {
-            float[] reductionPerLevel = {0.20f, 0.40f, 0.60f};
-            event.setAmount(event.getAmount() * (1.0f - reductionPerLevel[resistanceLevel - 1]));
-        }
-    }
-
-    // =====================
-    //   FALL
-    // =====================
-
-    @SubscribeEvent
-    public static void onFallDamage(LivingFallEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-
-        WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
-        if (!cap.isTransformed()) return;
-
-        int fallLevel = cap.getAttributeLevel(WereAttribute.FALL);
-        if (fallLevel <= 0) return;
-
-        switch (fallLevel) {
-            case 1 -> event.setDistance(event.getDistance() * 0.7f);
-            case 2 -> event.setDistance(event.getDistance() * 0.4f);
-            case 3 -> event.setDistance(0);
-        }
-    }
-
-    // =====================
-    //   MINING
-    // =====================
 
     @SubscribeEvent
     public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
-        var player = event.getEntity();
-        if (!player.getMainHandItem().isEmpty()) return;
-
-        WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
-        if (!cap.isWerewolf() || !cap.isTransformed()) return;
-
-        int miningLevel = cap.getAttributeLevel(WereAttribute.MINING);
-        if (miningLevel <= 0) return;
-
-        var block = event.getState();
-        if (!block.is(BlockTags.MINEABLE_WITH_PICKAXE) && !block.is(BlockTags.MINEABLE_WITH_AXE)) return;
-
-        float speed = switch (miningLevel) {
-            case 1 -> 10.0f;
-            case 2 -> 30.0f;
-            default -> 60.0f;
-        };
-        event.setNewSpeed(speed);
-    }
-
-    @SubscribeEvent
-    public static void onBlockBreak(BlockEvent.BreakEvent event) {
-        if (!(event.getPlayer() instanceof ServerPlayer player)) return;
-        if (!player.getMainHandItem().isEmpty()) return;
-
-        WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
-        if (!cap.isWerewolf() || !cap.isTransformed()) return;
-
-        int miningLevel = cap.getAttributeLevel(WereAttribute.MINING);
-        if (miningLevel <= 0) return;
-
-        var state = event.getState();
-        if (!state.is(BlockTags.MINEABLE_WITH_PICKAXE) && !state.is(BlockTags.MINEABLE_WITH_AXE)) return;
-
-        ItemStack fakeTool = switch (miningLevel) {
-            case 1 -> new ItemStack(Items.WOODEN_PICKAXE);
-            case 2 -> new ItemStack(Items.STONE_PICKAXE);
-            default -> new ItemStack(Items.IRON_PICKAXE);
-        };
-
-        var serverLevel = (ServerLevel) event.getLevel();
-        var pos = event.getPos();
-
-        var drops = net.minecraft.world.level.block.Block.getDrops(
-                state, serverLevel, pos,
-                serverLevel.getBlockEntity(pos),
-                player, fakeTool
-        );
-
-        for (ItemStack drop : drops) {
-            net.minecraft.world.level.block.Block.popResource(serverLevel, pos, drop);
+        WerewolfCapability cap = event.getEntity().getData(WerewolfAttachment.WEREWOLF_DATA);
+        if (cap.isTransformed() && cap.getInclination() == WereInclination.MASTERY
+                && event.getEntity().getMainHandItem().isEmpty()) {
+            if (event.getState().is(BlockTags.MINEABLE_WITH_PICKAXE)
+                    || event.getState().is(BlockTags.MINEABLE_WITH_AXE)) {
+                event.setNewSpeed(10.0f);
+            }
         }
     }
 
-    // =====================
-    //   CARNIVORE DIET
-    // =====================
+    // Ataque de Barrido (Sweep) y Daño de Fuerza
+    @SubscribeEvent
+    public static void onAttackEntity(AttackEntityEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || !player.getMainHandItem().isEmpty())
+            return;
+        WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
+        if (!cap.isTransformed())
+            return;
+
+        int str = cap.getAttributeLevel(WereAttribute.STRENGTH);
+        boolean isMastery = cap.getInclination() == WereInclination.MASTERY;
+        float multiplier = isMastery ? 1.4f : 1.0f;
+
+        if (str > 0 && event.getTarget() instanceof LivingEntity target) {
+            float totalDamage = str * 3.0f * multiplier;
+            target.hurt(player.damageSources().playerAttack(player), totalDamage);
+
+            // Daño en área real para el Mastery
+            if (isMastery) {
+                float sweepDamage = 1.0f + (totalDamage * 0.5f);
+                List<LivingEntity> nearby = player.level().getEntitiesOfClass(LivingEntity.class,
+                        target.getBoundingBox().inflate(1.5, 0.25, 1.5),
+                        e -> e != player && e != target && !player.isAlliedTo(e));
+                for (LivingEntity secondary : nearby) {
+                    secondary.knockback(0.4, (double) Mth.sin(player.getYRot() * ((float) Math.PI / 180F)),
+                            (double) (-Mth.cos(player.getYRot() * ((float) Math.PI / 180F))));
+                    secondary.hurt(player.damageSources().playerAttack(player), sweepDamage);
+                }
+                player.level().playSound(null, player.getX(), player.getY(), player.getZ(),
+                        SoundEvents.PLAYER_ATTACK_SWEEP, player.getSoundSource(), 1.0f, 1.0f);
+                ((ServerLevel) player.level()).sendParticles(net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK,
+                        target.getX(), target.getY(0.5), target.getZ(), 1, 0, 0, 0, 0);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void onIncomingDamage(LivingIncomingDamageEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player))
+            return;
+        WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
+        if (!cap.isTransformed())
+            return;
+
+        // Resistencia por atributo Toughness
+        int resLevel = cap.getAttributeLevel(WereAttribute.RESISTANCE);
+        if (resLevel > 0) {
+            float[] reductions = { 0.15f, 0.30f, 0.45f };
+            event.setAmount(event.getAmount() * (1.0f - reductions[Math.min(resLevel - 1, 2)]));
+        }
+
+        // Resistencia pasiva a proyectiles para Mastery
+        if (cap.getInclination() == WereInclination.MASTERY && event.getSource().is(DamageTypeTags.IS_PROJECTILE)) {
+            event.setAmount(event.getAmount() * 0.7f);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onFallDamage(LivingFallEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player))
+            return;
+        WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
+
+        if (cap.isLeaping()) {
+            event.setDistance(0);
+            event.setCanceled(true);
+            cap.setLeaping(false);
+            return;
+        }
+
+        if (!cap.isTransformed())
+            return;
+        int fall = cap.getAttributeLevel(WereAttribute.FALL);
+        if (fall == 1)
+            event.setDistance(event.getDistance() * 0.7f);
+        else if (fall == 2)
+            event.setDistance(event.getDistance() * 0.4f);
+        else if (fall >= 3) {
+            event.setDistance(0);
+            event.setCanceled(true);
+        }
+    }
 
     @SubscribeEvent
     public static void onItemUseStart(LivingEntityUseItemEvent.Start event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-
+        if (!(event.getEntity() instanceof ServerPlayer player))
+            return;
         WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
-        if (!cap.isWerewolf()) return;
+        if (!cap.isWerewolf())
+            return;
 
         ItemStack stack = event.getItem();
-        FoodProperties food = stack.get(DataComponents.FOOD);
-        if (food == null) return;
-
-        if (!MEAT_FOODS.contains(stack.getItem())) {
+        if (stack.get(DataComponents.FOOD) != null && !MEAT_FOODS.contains(stack.getItem())) {
             event.setCanceled(true);
-            player.displayClientMessage(
-                    Component.literal(CARNIVORE_MESSAGES.get(RANDOM.nextInt(CARNIVORE_MESSAGES.size()))),
-                    true
-            );
+            player.displayClientMessage(Component.literal("§cThe beast demands flesh."), true);
         }
     }
 
-    // =====================
-    //   CLARITY
-    // =====================
+    private static final ThreadLocal<Boolean> IS_ADAPTING = ThreadLocal.withInitial(() -> false);
 
-    private static final ThreadLocal<Boolean> IS_ADAPTING_EFFECT = ThreadLocal.withInitial(() -> false);
     @SubscribeEvent
     public static void onEffectApplied(MobEffectEvent.Applicable event) {
-        if (IS_ADAPTING_EFFECT.get()) return;
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-
+        if (IS_ADAPTING.get() || !(event.getEntity() instanceof ServerPlayer player))
+            return;
         WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
-        if (!cap.isTransformed()) return;
+        if (!cap.isTransformed())
+            return;
 
-        int clarityLevel = cap.getAttributeLevel(WereAttribute.CLARITY);
-        if (clarityLevel <= 0) return;
+        int clarity = cap.getAttributeLevel(WereAttribute.CLARITY);
+        if (clarity > 0 && NEGATIVE_EFFECTS.contains(event.getEffectInstance().getEffect())) {
+            float m = cap.getInclination() == WereInclination.MASTERY ? 1.25f : 1.0f;
+            int dur = (int) (event.getEffectInstance().getDuration() * (1.0f - clarity * 0.2f * m));
 
-        MobEffectInstance instance = event.getEffectInstance();
-        if (instance == null) return;
-
-        if (NEGATIVE_EFFECTS.contains(instance.getEffect())) {
-            int newDuration = (int)(instance.getDuration() * (1.0f - clarityLevel * 0.2f));
-            if (newDuration <= 0) {
+            if (dur <= 0) {
                 event.setResult(MobEffectEvent.Applicable.Result.DO_NOT_APPLY);
             } else {
-                IS_ADAPTING_EFFECT.set(true);
+                IS_ADAPTING.set(true);
                 try {
-                    event.getEntity().addEffect(new MobEffectInstance(
-                            instance.getEffect(), newDuration,
-                            instance.getAmplifier(), instance.isAmbient(), instance.isVisible()
-                    ));
+                    player.addEffect(new MobEffectInstance(event.getEffectInstance().getEffect(), dur,
+                            event.getEffectInstance().getAmplifier(), event.getEffectInstance().isAmbient(),
+                            event.getEffectInstance().isVisible()));
                 } finally {
-                    IS_ADAPTING_EFFECT.set(false);
+                    IS_ADAPTING.set(false);
                 }
                 event.setResult(MobEffectEvent.Applicable.Result.DO_NOT_APPLY);
             }
         }
     }
 
-    // =====================
-    //   APLICAR ATRIBUTOS
-    // =====================
-
     public static void applyAllModifiers(ServerPlayer player, WerewolfCapability cap) {
-        int protection = cap.getAttributeLevel(WereAttribute.PROTECTION);
-        if (protection > 0)
-            addModifier(player, Attributes.ARMOR, RL_PROTECTION,
-                    protection * 2.5, AttributeModifier.Operation.ADD_VALUE);
+        float masteryBonus = cap.getInclination() == WereInclination.MASTERY ? 1.5f : 1.0f;
 
-        int speed = cap.getAttributeLevel(WereAttribute.SPEED);
-        if (speed > 0)
-            addModifier(player, Attributes.MOVEMENT_SPEED, RL_SPEED,
-                    speed * 0.02, AttributeModifier.Operation.ADD_VALUE);
+        // Velocidad Base por Path
+        double baseSpeed = 0.0;
+        if (cap.getInclination() == WereInclination.PREDATOR)
+            baseSpeed = 0.04;
+        else if (cap.getInclination() == WereInclination.SKILLFUL)
+            baseSpeed = 0.02;
 
-        int knockback = cap.getAttributeLevel(WereAttribute.KNOCKBACK);
-        if (knockback > 0)
-            addModifier(player, Attributes.ATTACK_KNOCKBACK, RL_KNOCKBACK,
-                    knockback * 0.5, AttributeModifier.Operation.ADD_VALUE);
-
-        int knockresist = cap.getAttributeLevel(WereAttribute.KNOCKRESIST);
-        if (knockresist > 0)
-            addModifier(player, Attributes.KNOCKBACK_RESISTANCE, RL_KNOCKRESIST,
-                    knockresist * 0.05, AttributeModifier.Operation.ADD_VALUE);
-
-        int jump = cap.getAttributeLevel(WereAttribute.JUMP);
-        if (jump > 0)
-            addModifier(player, Attributes.JUMP_STRENGTH, RL_JUMP,
-                    jump * 0.1, AttributeModifier.Operation.ADD_VALUE);
-
-        // Hitbox & POV (Scale)
-        addModifier(player, Attributes.SCALE, RL_SCALE,
-                0.15, AttributeModifier.Operation.ADD_VALUE);
+        addMod(player, Attributes.ARMOR, RL_PROTECTION,
+                cap.getAttributeLevel(WereAttribute.PROTECTION) * 2.5 * masteryBonus);
+        addMod(player, Attributes.MOVEMENT_SPEED, RL_SPEED,
+                baseSpeed + (cap.getAttributeLevel(WereAttribute.SPEED) * 0.02));
+        addMod(player, Attributes.KNOCKBACK_RESISTANCE, RL_KNOCKRESIST,
+                (cap.getAttributeLevel(WereAttribute.KNOCKRESIST) * 0.1)
+                        + (cap.getInclination() == WereInclination.MASTERY ? 0.35 : 0.0));
+        addMod(player, Attributes.JUMP_STRENGTH, RL_JUMP, cap.getAttributeLevel(WereAttribute.JUMP) * 0.1);
+        addMod(player, Attributes.SCALE, RL_SCALE, 0.15);
     }
 
     public static void removeAllModifiers(ServerPlayer player) {
-        removeModifier(player, Attributes.ARMOR,                RL_PROTECTION);
-        removeModifier(player, Attributes.MOVEMENT_SPEED,       RL_SPEED);
-        removeModifier(player, Attributes.ATTACK_KNOCKBACK,     RL_KNOCKBACK);
-        removeModifier(player, Attributes.KNOCKBACK_RESISTANCE, RL_KNOCKRESIST);
-        removeModifier(player, Attributes.JUMP_STRENGTH,        RL_JUMP);
-        removeModifier(player, Attributes.SCALE,                RL_SCALE);
+        remMod(player, Attributes.ARMOR, RL_PROTECTION);
+        remMod(player, Attributes.MOVEMENT_SPEED, RL_SPEED);
+        remMod(player, Attributes.ATTACK_KNOCKBACK, RL_KNOCKBACK);
+        remMod(player, Attributes.KNOCKBACK_RESISTANCE, RL_KNOCKRESIST);
+        remMod(player, Attributes.JUMP_STRENGTH, RL_JUMP);
+        remMod(player, Attributes.SCALE, RL_SCALE);
     }
 
-    private static void addModifier(ServerPlayer player,
-                                    Holder<Attribute> attribute,
-                                    ResourceLocation id, double value,
-                                    AttributeModifier.Operation operation) {
-        var instance = player.getAttribute(attribute);
-        if (instance == null) return;
-        instance.removeModifier(id);
-        instance.addTransientModifier(new AttributeModifier(id, value, operation));
+    private static void addMod(ServerPlayer p, Holder<Attribute> a, ResourceLocation id, double v) {
+        var i = p.getAttribute(a);
+        if (i != null) {
+            i.removeModifier(id);
+            i.addTransientModifier(new AttributeModifier(id, v, AttributeModifier.Operation.ADD_VALUE));
+        }
     }
 
-    private static void removeModifier(ServerPlayer player,
-                                       Holder<Attribute> attribute,
-                                       ResourceLocation id) {
-        var instance = player.getAttribute(attribute);
-        if (instance != null) instance.removeModifier(id);
+    private static void remMod(ServerPlayer p, Holder<Attribute> a, ResourceLocation id) {
+        var i = p.getAttribute(a);
+        if (i != null)
+            i.removeModifier(id);
     }
 }

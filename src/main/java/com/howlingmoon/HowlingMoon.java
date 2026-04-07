@@ -10,7 +10,6 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -56,40 +55,23 @@ public class HowlingMoon {
                 PayloadRegistrar registrar = event.registrar(MODID).versioned("1.0");
 
                 // Servidor → Cliente
-                registrar.playToClient(
-                                SyncWerewolfPacket.TYPE,
-                                SyncWerewolfPacket.STREAM_CODEC,
+                registrar.playToClient(SyncWerewolfPacket.TYPE, SyncWerewolfPacket.STREAM_CODEC,
                                 SyncWerewolfPacket::handle);
-
-                registrar.playToClient(
-                                AbilityCooldownPacket.TYPE,
-                                AbilityCooldownPacket.STREAM_CODEC,
+                registrar.playToClient(AbilityCooldownPacket.TYPE, AbilityCooldownPacket.STREAM_CODEC,
                                 AbilityCooldownPacket::handle);
 
                 // Cliente → Servidor
-                registrar.playToServer(
-                                UpgradeAttributePacket.TYPE,
-                                UpgradeAttributePacket.STREAM_CODEC,
+                registrar.playToServer(UpgradeAttributePacket.TYPE, UpgradeAttributePacket.STREAM_CODEC,
                                 UpgradeAttributePacket::handle);
-
-                registrar.playToServer(
-                                TransformPacket.TYPE,
-                                TransformPacket.STREAM_CODEC,
-                                TransformPacket::handle);
-
-                registrar.playToServer(
-                                UseAbilityPacket.TYPE,
-                                UseAbilityPacket.STREAM_CODEC,
-                                UseAbilityPacket::handle);
-
-                registrar.playToServer(
-                                UnlockAbilityPacket.TYPE,
-                                UnlockAbilityPacket.STREAM_CODEC,
+                registrar.playToServer(TransformPacket.TYPE, TransformPacket.STREAM_CODEC, TransformPacket::handle);
+                registrar.playToServer(UseAbilityPacket.TYPE, UseAbilityPacket.STREAM_CODEC, UseAbilityPacket::handle);
+                registrar.playToServer(UnlockAbilityPacket.TYPE, UnlockAbilityPacket.STREAM_CODEC,
                                 UnlockAbilityPacket::handle);
-
-                registrar.playToServer(
-                                SelectInclinationPacket.TYPE,
-                                SelectInclinationPacket.STREAM_CODEC,
+                registrar.playToServer(SelectInclinationPacket.TYPE, SelectInclinationPacket.STREAM_CODEC,
                                 SelectInclinationPacket::handle);
+
+                // REGISTRO DEL NUEVO PAQUETE DE SELECCIÓN
+                registrar.playToServer(SelectAbilityPacket.TYPE, SelectAbilityPacket.STREAM_CODEC,
+                                SelectAbilityPacket::handle);
         }
 }

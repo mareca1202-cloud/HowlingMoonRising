@@ -1,11 +1,26 @@
 {
   "itemGroup.howlingmoonrising": "Howling Moon Rising",
-
   "item.howlingmoonrising.moon_pearl": "Moon Pearl",
   "item.howlingmoonrising.silver_ingot": "Silver Ingot",
   "item.howlingmoonrising.wolfsbane_potion": "Wolfsbane Potion",
   "item.howlingmoonrising.silver_sword": "Silver Sword",
-
   "block.howlingmoonrising.silver_ore": "Silver Ore",
-  "block.howlingmoonrising.deepslate_silver_ore": "Deepslate Silver Ore"
+  "block.howlingmoonrising.deepslate_silver_ore": "Deepslate Silver Ore",
+  "key.howlingmoonrising.open_menu": "Open Wolf Menu",
+  "key.howlingmoonrising.transform": "Transform",
+  "key.howlingmoonrising.open_radial": "Select Ability",
+  "key.howlingmoonrising.use_ability": "Use Ability",
+  "key.categories.howlingmoonrising": "Howling Moon Rising",
+  "attribute.strength": "Strength",
+  "attribute.protection": "Protection",
+  "attribute.speed": "Agility",
+  "attribute.jump": "Jump",
+  "attribute.fall": "Fall Resistance",
+  "attribute.knockback": "Knockback",
+  "attribute.knockresist": "Knockback Resist",
+  "attribute.hunger": "Metabolism",
+  "attribute.regeneration": "Regeneration",
+  "attribute.clarity": "Clarity",
+  "attribute.exhilarating": "Exhilaration",
+  "attribute.resistance": "Toughness"
 }

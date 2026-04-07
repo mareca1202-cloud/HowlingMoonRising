@@ -3,6 +3,7 @@ package com.howlingmoon;
 
 import com.howlingmoon.client.ClientSetup;
 import com.howlingmoon.client.ScentTrackingRenderer;
+import com.howlingmoon.client.WerewolfOverlay;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -19,7 +20,8 @@ public class HowlingMoonClient {
         modEventBus.addListener(ClientSetup::registerRenderers);
         modEventBus.addListener(WerewolfKeyBindings::onRegisterKeyMappings);
 
-        // REGISTRO DEL RASTREADOR:
+        // Registros de eventos globales
         NeoForge.EVENT_BUS.register(ScentTrackingRenderer.class);
+        NeoForge.EVENT_BUS.register(WerewolfOverlay.class); // NUEVO
     }
 }
