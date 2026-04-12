@@ -2,19 +2,27 @@
 package com.howlingmoon;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import com.howlingmoon.network.*;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.world.item.alchemy.Potions;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.brewing.IBrewingRecipe;
+import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
+import com.howlingmoon.network.*;
 
 @Mod(HowlingMoon.MODID)
 public class HowlingMoon {
@@ -37,30 +45,56 @@ public class HowlingMoon {
                                                 output.accept(HMItems.SILVER_SWORD.get());
                                                 output.accept(HMBlocks.SILVER_ORE.get().asItem());
                                                 output.accept(HMBlocks.DEEPSLATE_SILVER_ORE.get().asItem());
+                                                output.accept(HMBlocks.WOLFSBANE_FLOWER.get().asItem());
                                         }).build());
 
         public HowlingMoon(IEventBus modEventBus, ModContainer modContainer) {
-                LOGGER.info("Howling Moon is awakening...");
                 HMItems.ITEMS.register(modEventBus);
                 HMBlocks.BLOCKS.register(modEventBus);
                 CREATIVE_MODE_TABS.register(modEventBus);
                 WerewolfAttachment.ATTACHMENT_TYPES.register(modEventBus);
                 HMEntities.ENTITIES.register(modEventBus);
                 HMSounds.SOUNDS.register(modEventBus);
+
                 modEventBus.addListener(HMEntities::registerAttributes);
                 modEventBus.addListener(HowlingMoon::registerPackets);
+
+                // --- CORRECCIÓN DE BUS ---
+                // RegisterBrewingRecipesEvent pertenece al Game Bus, no al Mod Bus.
+                NeoForge.EVENT_BUS.addListener(HowlingMoon::registerBrewingRecipes);
+        }
+
+        private static void registerBrewingRecipes(RegisterBrewingRecipesEvent event) {
+                event.getBuilder().addRecipe(new IBrewingRecipe() {
+                        @Override
+                        public boolean isInput(ItemStack input) {
+                                if (!input.is(Items.POTION))
+                                        return false;
+                                PotionContents contents = input.get(DataComponents.POTION_CONTENTS);
+                                return contents != null && contents.is(Potions.AWKWARD);
+                        }
+
+                        @Override
+                        public boolean isIngredient(ItemStack ingredient) {
+                                return ingredient.is(HMBlocks.WOLFSBANE_FLOWER.get().asItem());
+                        }
+
+                        @Override
+                        public ItemStack getOutput(ItemStack input, ItemStack ingredient) {
+                                if (isInput(input) && isIngredient(ingredient)) {
+                                        return new ItemStack(HMItems.WOLFSBANE_POTION.get());
+                                }
+                                return ItemStack.EMPTY;
+                        }
+                });
         }
 
         private static void registerPackets(RegisterPayloadHandlersEvent event) {
                 PayloadRegistrar registrar = event.registrar(MODID).versioned("1.0");
-
-                // Servidor → Cliente
                 registrar.playToClient(SyncWerewolfPacket.TYPE, SyncWerewolfPacket.STREAM_CODEC,
                                 SyncWerewolfPacket::handle);
                 registrar.playToClient(AbilityCooldownPacket.TYPE, AbilityCooldownPacket.STREAM_CODEC,
                                 AbilityCooldownPacket::handle);
-
-                // Cliente → Servidor
                 registrar.playToServer(UpgradeAttributePacket.TYPE, UpgradeAttributePacket.STREAM_CODEC,
                                 UpgradeAttributePacket::handle);
                 registrar.playToServer(TransformPacket.TYPE, TransformPacket.STREAM_CODEC, TransformPacket::handle);
@@ -69,8 +103,6 @@ public class HowlingMoon {
                                 UnlockAbilityPacket::handle);
                 registrar.playToServer(SelectInclinationPacket.TYPE, SelectInclinationPacket.STREAM_CODEC,
                                 SelectInclinationPacket::handle);
-
-                // REGISTRO DEL NUEVO PAQUETE DE SELECCIÓN
                 registrar.playToServer(SelectAbilityPacket.TYPE, SelectAbilityPacket.STREAM_CODEC,
                                 SelectAbilityPacket::handle);
         }

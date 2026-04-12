@@ -10,6 +10,7 @@ public class WerewolfCapability {
     private boolean isTransformed = false;
     private boolean moonForced = false;
     private boolean isLeaping = false;
+    private boolean isInfected = false; // NUEVO: Para la fase previa de infección
 
     private int level = 1;
     private int experience = 0;
@@ -54,6 +55,14 @@ public class WerewolfCapability {
 
     public void setLeaping(boolean leaping) {
         this.isLeaping = leaping;
+    }
+
+    public boolean isInfected() {
+        return isInfected;
+    }
+
+    public void setInfected(boolean infected) {
+        this.isInfected = infected;
     }
 
     public int getLevel() {
@@ -222,21 +231,21 @@ public class WerewolfCapability {
         });
     }
 
-    // --- RESET TOTAL PARA CURACIÓN ---
     public void reset() {
-        this.isWerewolf = false;
-        this.isTransformed = false;
-        this.moonForced = false;
-        this.isLeaping = false;
-        this.level = 1;
-        this.experience = 0;
-        this.usedAttributePoints = 0;
-        this.usedAbilityPoints = 0;
-        this.unlockedAbilities.clear();
-        this.selectedAbility = null;
-        this.inclination = WereInclination.NEUTRAL; // RESET DE SENDA
-        this.attributeTree.clear();
-        this.cooldowns.clear();
-        this.completedTrials.clear();
+        isWerewolf = false;
+        isTransformed = false;
+        moonForced = false;
+        isLeaping = false;
+        isInfected = false;
+        level = 1;
+        experience = 0;
+        usedAttributePoints = 0;
+        usedAbilityPoints = 0;
+        unlockedAbilities.clear();
+        selectedAbility = null;
+        inclination = WereInclination.NEUTRAL;
+        attributeTree.clear();
+        cooldowns.clear();
+        completedTrials.clear();
     }
 }
