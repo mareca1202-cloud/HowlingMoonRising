@@ -18,14 +18,6 @@ This is my way of giving it back.
 
 ---
 
-## 🐾 A First Playable Version is Coming Soon
-
-It won't be pretty — it'll be rough, early, and far from complete. But it'll be real, and it'll be playable.
-
-At this stage of development, I simply can't test everything I add on my own, and I need the community's eyes on it. If you find bugs, oddities, or anything that feels off, your feedback will be invaluable. **I'm actively looking for testers.** If you're willing to get your hands dirty and help shape this mod from the ground up, you're more than welcome to join the pack.
-
----
-
 ## 🐺 Key Features
 
 ### 💎 Premium Visuals & Immersion
