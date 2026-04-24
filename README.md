@@ -101,4 +101,4 @@ This mod is a solo project, but the community is what makes it worth building.
 - 💡 **Have a suggestion?** Open a discussion or join the Discord.
 - 🧪 **Want to test early builds?** Reach out on Discord — testers are always welcome.
 
-> 💬 **[Join the Discord](https://discord.gg/vpDBTpkU)** — Follow the development, report bugs, and be part of the pack.
+> 💬 **[Join the Discord](https://discord.gg/zp47zjgq)** — Follow the development, report bugs, and be part of the pack.
