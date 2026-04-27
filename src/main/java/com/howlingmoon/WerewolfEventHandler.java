@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.entity.monster.Monster;
@@ -22,6 +23,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 @EventBusSubscriber(modid = HowlingMoon.MODID)
@@ -253,5 +255,13 @@ public class WerewolfEventHandler {
     private static void syncToClient(ServerPlayer player) {
         PacketDistributor.sendToPlayer(player,
                 SyncWerewolfPacket.fromCap(player.getData(WerewolfAttachment.WEREWOLF_DATA)));
+    }
+
+    @SubscribeEvent
+    public static void onLivingChangeTarget(LivingChangeTargetEvent event) {
+        // Prevent Iron Golems from attacking Hunters - they are village defenders
+        if (event.getEntity() instanceof IronGolem && event.getNewAboutToBeSetTarget() instanceof HunterEntity) {
+            event.setCanceled(true);
+        }
     }
 }

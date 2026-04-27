@@ -10,7 +10,7 @@ public enum WereInclination implements StringRepresentable {
     MASTERY("mastery", "Mastery (The Lunar Colossus)",
             "Unstoppable physical force.\n- Siege Claws: Mine stone and ores barehanded.\n- Sweep Attack: Melee hits deal area damage.\n- Immovable: Massive knockback resistance.\n- Aegis Plate: Takes 30% less projectile damage.\n- Bonus scaling to Strength and Protection."),
     PREDATOR("predator", "Predator (The Blood Hunter)",
-            "Lethal speed, but driven by eternal hunger.\n- Thrill of the Hunt: Kills grant Speed II and Strength.\n- Blood Feed: Kills restore hunger and health.\n- Apex Speed: Permanent 15% movement speed bonus.\n- Double XP gain, but hunger drains 80% faster.");
+            "Lethal speed, but driven by eternal hunger.\n- Thrill of the Hunt: Kills grant Speed II and Strength.\n- Blood Feed: Kills restore hunger and health.\n- Apex Speed: Permanent 15% movement speed bonus.\n- Lunar Frenzy: Enters a furious frenzy during full moon nights.\n- Double XP gain, but is constantly much hungrier.");
 
     private final String name;
     private final String displayName;

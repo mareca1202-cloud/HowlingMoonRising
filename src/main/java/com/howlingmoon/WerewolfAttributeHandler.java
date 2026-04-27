@@ -282,6 +282,16 @@ public class WerewolfAttributeHandler {
         remMod(player, Attributes.KNOCKBACK_RESISTANCE, RL_KNOCKRESIST);
         remMod(player, Attributes.JUMP_STRENGTH, RL_JUMP);
         remMod(player, Attributes.SCALE, RL_SCALE);
+
+        // Remover efectos de habilidades que pueden persistir al destransformarse
+        player.removeEffect(MobEffects.NIGHT_VISION);
+        player.removeEffect(MobEffects.LUCK);
+        player.removeEffect(MobEffects.CONDUIT_POWER);
+        player.removeEffect(MobEffects.DIG_SPEED);
+        player.removeEffect(MobEffects.DAMAGE_BOOST);
+        player.removeEffect(MobEffects.REGENERATION);
+        player.removeEffect(MobEffects.HUNGER);
+        player.removeEffect(MobEffects.JUMP);
     }
 
     private static void addMod(ServerPlayer p, Holder<Attribute> a, ResourceLocation id, double v) {

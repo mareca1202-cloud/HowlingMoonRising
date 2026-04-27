@@ -2,7 +2,6 @@
 package com.howlingmoon;
 
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -16,19 +15,20 @@ import net.minecraft.world.level.Level;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
+import net.minecraft.world.entity.monster.Monster;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class WerewolfEntity extends PathfinderMob implements GeoEntity {
+public class WerewolfEntity extends Monster implements GeoEntity {
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     public boolean forceMoving = false;
 
-    public WerewolfEntity(EntityType<? extends PathfinderMob> type, Level level) {
+    public WerewolfEntity(EntityType<? extends Monster> type, Level level) {
         super(type, level);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return PathfinderMob.createMobAttributes()
+        return Monster.createMonsterAttributes()
                 .add(Attributes.MAX_HEALTH, 40.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.35)
                 .add(Attributes.ATTACK_DAMAGE, 8.0)
@@ -49,14 +49,27 @@ public class WerewolfEntity extends PathfinderMob implements GeoEntity {
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "controller", 5, state -> {
             if (state.isMoving() || forceMoving) {
-                return state.setAndContinue(RawAnimation.begin().thenLoop("animation.werewolf.walk"));
+                return state.setAndContinue(RawAnimation.begin().thenLoop("Walk"));
             }
-            return state.setAndContinue(RawAnimation.begin().thenLoop("animation.werewolf.idle"));
+            return state.setAndContinue(RawAnimation.begin().thenLoop("Idle"));
         }));
     }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
+    }
+
+    public static boolean checkWerewolfSpawnRules(EntityType<WerewolfEntity> type, net.minecraft.world.level.ServerLevelAccessor level, net.minecraft.world.entity.MobSpawnType reason, net.minecraft.core.BlockPos pos, net.minecraft.util.RandomSource random) {
+        if (level.getLevel().getMoonPhase() != 0) {
+            return false;
+        }
+        if (level.getDifficulty() == net.minecraft.world.Difficulty.PEACEFUL) {
+            return false;
+        }
+        if (!net.minecraft.world.entity.monster.Monster.isDarkEnoughToSpawn(level, pos, random)) {
+            return false;
+        }
+        return checkMobSpawnRules(type, level, reason, pos, random);
     }
 }

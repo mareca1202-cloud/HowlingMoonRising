@@ -16,6 +16,7 @@ import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.AbstractIllager;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
@@ -73,6 +74,10 @@ public class HunterEntity extends AbstractIllager implements RangedAttackMob {
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(
                 this, Player.class, 10, true, false, this::isValidWerewolfTarget));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(
+                this, WerewolfEntity.class, 10, true, false, null));
+        this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(
+                this, Monster.class, 10, true, false, entity -> !(entity instanceof AbstractIllager)));
     }
 
     private boolean isValidWerewolfTarget(LivingEntity entity) {
@@ -127,6 +132,15 @@ public class HunterEntity extends AbstractIllager implements RangedAttackMob {
     }
 
     private void applyHunterDebuffs(LivingEntity target) {
+        // Apply debuffs to WerewolfEntity NPCs
+        if (target instanceof WerewolfEntity) {
+            target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 1));
+            target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 1));
+            target.hurt(target.damageSources().magic(), 10.0f);
+            return;
+        }
+
+        // Apply debuffs to werewolf players
         if (!(target instanceof ServerPlayer player)) return;
         WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
         if (!cap.isWerewolf()) return;
@@ -154,5 +168,9 @@ public class HunterEntity extends AbstractIllager implements RangedAttackMob {
         }
         this.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(HMItems.SILVER_SWORD.get()));
         return super.finalizeSpawn(level, difficulty, spawnType, spawnData);
+    }
+
+    public static boolean checkHunterSpawnRules(EntityType<? extends AbstractIllager> type, ServerLevelAccessor level, MobSpawnType reason, net.minecraft.core.BlockPos pos, net.minecraft.util.RandomSource random) {
+        return checkMobSpawnRules(type, level, reason, pos, random);
     }
 }

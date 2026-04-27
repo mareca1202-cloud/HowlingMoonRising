@@ -59,6 +59,7 @@ public class HowlingMoon {
                 HMSounds.SOUNDS.register(modEventBus);
 
                 modEventBus.addListener(HMEntities::registerAttributes);
+                modEventBus.addListener(HMEntities::registerSpawnPlacements);
                 modEventBus.addListener(HowlingMoon::registerPackets);
 
                 // --- CORRECCIÓN DE BUS ---
