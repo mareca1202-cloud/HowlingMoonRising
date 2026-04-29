@@ -1,7 +1,6 @@
 {
-  "parent": "minecraft:block/cube_column",
+  "parent": "minecraft:block/cube_all",
   "textures": {
-    "end": "howlingmoonrising:block/silver_ore_top",
-    "side": "howlingmoonrising:block/silver_ore_side"
+    "all": "howlingmoonrising:block/silver_ore"
   }
 }
