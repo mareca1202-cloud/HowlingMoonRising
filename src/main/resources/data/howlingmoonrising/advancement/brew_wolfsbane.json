@@ -1,0 +1,30 @@
+{
+  "parent": "howlingmoonrising:get_wolfsbane",
+  "display": {
+    "icon": {
+      "id": "howlingmoonrising:wolfsbane_potion"
+    },
+    "title": {
+      "translate": "advancements.howlingmoonrising.brew_wolfsbane.title"
+    },
+    "description": {
+      "translate": "advancements.howlingmoonrising.brew_wolfsbane.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "brew_wolfsbane": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "howlingmoonrising:wolfsbane_potion"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -39,6 +39,7 @@ public record SelectInclinationPacket(WereInclination inclination) implements Cu
                 // Only allow choosing if NEUTRAL
                 if (cap.getInclination() == WereInclination.NEUTRAL) {
                     cap.setInclination(packet.inclination());
+                    com.howlingmoon.HMAdvancements.trigger(serverPlayer, "get_path");
                     PacketDistributor.sendToPlayer(serverPlayer, SyncWerewolfPacket.fromCap(cap));
                 }
             }

@@ -1,0 +1,30 @@
+{
+  "parent": "howlingmoonrising:root",
+  "display": {
+    "icon": {
+      "id": "howlingmoonrising:wolfsbane_flower"
+    },
+    "title": {
+      "translate": "advancements.howlingmoonrising.get_wolfsbane.title"
+    },
+    "description": {
+      "translate": "advancements.howlingmoonrising.get_wolfsbane.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "get_wolfsbane": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "howlingmoonrising:wolfsbane_flower"
+          }
+        ]
+      }
+    }
+  }
+}

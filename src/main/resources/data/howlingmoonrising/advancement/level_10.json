@@ -1,0 +1,26 @@
+{
+  "parent": "howlingmoonrising:level_5",
+  "display": {
+    "icon": {
+      "id": "minecraft:experience_bottle"
+    },
+    "title": {
+      "translate": "advancements.howlingmoonrising.level_10.title"
+    },
+    "description": {
+      "translate": "advancements.howlingmoonrising.level_10.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "level_10": {
+      "trigger": "howlingmoonrising:generic",
+      "conditions": {
+        "id": "level_10"
+      }
+    }
+  }
+}

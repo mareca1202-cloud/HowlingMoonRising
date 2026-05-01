@@ -1,0 +1,26 @@
+{
+  "parent": "howlingmoonrising:root",
+  "display": {
+    "icon": {
+      "id": "howlingmoonrising:wolfsbane_flower"
+    },
+    "title": {
+      "translate": "advancements.howlingmoonrising.wolfsbane_burn.title"
+    },
+    "description": {
+      "translate": "advancements.howlingmoonrising.wolfsbane_burn.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "wolfsbane_burn": {
+      "trigger": "howlingmoonrising:generic",
+      "conditions": {
+        "id": "wolfsbane_burn"
+      }
+    }
+  }
+}

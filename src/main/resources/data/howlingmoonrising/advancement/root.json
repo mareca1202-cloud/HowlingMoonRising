@@ -1,0 +1,24 @@
+{
+  "display": {
+    "icon": {
+      "id": "howlingmoonrising:moon_pearl"
+    },
+    "title": {
+      "translate": "advancements.howlingmoonrising.root.title"
+    },
+    "description": {
+      "translate": "advancements.howlingmoonrising.root.description"
+    },
+    "background": "minecraft:textures/block/deepslate_iron_ore.png",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "became_werewolf": {
+      "trigger": "howlingmoonrising:generic",
+      "conditions": {
+        "id": "became_werewolf"
+      }
+    }
+  }
+}

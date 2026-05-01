@@ -1,0 +1,26 @@
+{
+  "parent": "howlingmoonrising:root",
+  "display": {
+    "icon": {
+      "id": "minecraft:totem_of_undying"
+    },
+    "title": {
+      "translate": "advancements.howlingmoonrising.get_path.title"
+    },
+    "description": {
+      "translate": "advancements.howlingmoonrising.get_path.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "get_path": {
+      "trigger": "howlingmoonrising:generic",
+      "conditions": {
+        "id": "get_path"
+      }
+    }
+  }
+}

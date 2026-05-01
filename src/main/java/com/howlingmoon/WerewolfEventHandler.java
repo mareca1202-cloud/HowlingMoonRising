@@ -8,6 +8,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.Pose;
@@ -67,6 +68,7 @@ public class WerewolfEventHandler {
             cap.setMoonForced(true);
             WerewolfAttributeHandler.applyAllModifiers(player, cap);
             playTransformEffects(player, true);
+            HMAdvancements.trigger(player, "became_werewolf");
             syncToClient(player);
             player.sendSystemMessage(
                     net.minecraft.network.chat.Component.translatable("message.howlingmoonrising.curse_awakened").withStyle(net.minecraft.ChatFormatting.DARK_PURPLE));
@@ -80,6 +82,7 @@ public class WerewolfEventHandler {
             player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 40, 0, false, false));
             player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 40, 1, false, false));
             player.addEffect(new MobEffectInstance(MobEffects.HUNGER, 40, 1, false, false));
+            HMAdvancements.trigger(player, "predator_moon");
         }
 
         if (player.tickCount % 20 != 0)
@@ -104,6 +107,12 @@ public class WerewolfEventHandler {
                 syncToClient(player);
                 player.sendSystemMessage(net.minecraft.network.chat.Component.translatable("message.howlingmoonrising.moon_sets").withStyle(net.minecraft.ChatFormatting.GRAY));
             }
+
+            // Safety net for Level Achievements: check every second
+            if (cap.getLevel() >= 5) HMAdvancements.trigger(player, "level_5");
+            if (cap.getLevel() >= 10) HMAdvancements.trigger(player, "level_10");
+            if (cap.getLevel() >= 15) HMAdvancements.trigger(player, "level_15");
+            if (cap.getLevel() >= 20) HMAdvancements.trigger(player, "level_20");
         }
     }
 
@@ -230,6 +239,19 @@ public class WerewolfEventHandler {
             player.heal(1.0f);
         }
         cap.addExperience(xp);
+        
+        // Advancement: Silver Kill
+        ItemStack weapon = player.getMainHandItem();
+        if (!weapon.isEmpty() && (weapon.is(WerewolfWeaknessHandler.SILVER_ITEMS) || weapon.is(WerewolfWeaknessHandler.SILVER_INGOTS))) {
+            if (killed instanceof Player killedPlayer) {
+                if (killedPlayer.getData(WerewolfAttachment.WEREWOLF_DATA).isWerewolf()) {
+                    HMAdvancements.trigger(player, "silver_kill_player");
+                }
+            } else if (killed instanceof WerewolfEntity) {
+                HMAdvancements.trigger(player, "silver_kill_npc");
+            }
+        }
+
         syncToClient(player);
     }
 

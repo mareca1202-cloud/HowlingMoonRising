@@ -27,11 +27,11 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 @EventBusSubscriber(modid = HowlingMoon.MODID)
 public class WerewolfWeaknessHandler {
 
-    private static final TagKey<Item> SILVER_ITEMS = TagKey.create(
+    public static final TagKey<Item> SILVER_ITEMS = TagKey.create(
             Registries.ITEM,
             ResourceLocation.fromNamespaceAndPath(HowlingMoon.MODID, "silver_items"));
 
-    private static final TagKey<Item> SILVER_INGOTS = TagKey.create(
+    public static final TagKey<Item> SILVER_INGOTS = TagKey.create(
             Registries.ITEM,
             ResourceLocation.fromNamespaceAndPath("c", "ingots/silver"));
 

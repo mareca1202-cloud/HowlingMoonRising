@@ -110,6 +110,7 @@ public class WerewolfAttributeHandler {
                         (ServerLevel) event.getLevel(), event.getPos(), null, player, fakeIronPick);
                 drops.forEach(d -> net.minecraft.world.level.block.Block.popResource((ServerLevel) event.getLevel(),
                         event.getPos(), d));
+                HMAdvancements.trigger(player, "colossus_break");
             }
         }
     }

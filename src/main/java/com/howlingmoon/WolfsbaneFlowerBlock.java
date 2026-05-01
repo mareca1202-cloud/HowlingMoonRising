@@ -2,6 +2,7 @@ package com.howlingmoon;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -62,6 +63,7 @@ public class WolfsbaneFlowerBlock extends FlowerBlock {
                 living.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 100, 1));
                 if (entity instanceof Player) {
                     living.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.BLINDNESS, 60, 0));
+                    HMAdvancements.trigger((ServerPlayer) entity, "wolfsbane_burn");
                 }
             }
         }

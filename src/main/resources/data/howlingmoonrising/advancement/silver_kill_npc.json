@@ -1,0 +1,26 @@
+{
+  "parent": "howlingmoonrising:root",
+  "display": {
+    "icon": {
+      "id": "howlingmoonrising:silver_sword"
+    },
+    "title": {
+      "translate": "advancements.howlingmoonrising.silver_kill_npc.title"
+    },
+    "description": {
+      "translate": "advancements.howlingmoonrising.silver_kill_npc.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "silver_kill_npc": {
+      "trigger": "howlingmoonrising:generic",
+      "conditions": {
+        "id": "silver_kill_npc"
+      }
+    }
+  }
+}

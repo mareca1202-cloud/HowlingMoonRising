@@ -43,6 +43,12 @@ public class WerewolfCommand {
             cap.setWerewolf(true);
             cap.forceSetLevel(newLevel);
 
+            HMAdvancements.trigger(player, "became_werewolf");
+            if (newLevel >= 5) HMAdvancements.trigger(player, "level_5");
+            if (newLevel >= 10) HMAdvancements.trigger(player, "level_10");
+            if (newLevel >= 15) HMAdvancements.trigger(player, "level_15");
+            if (newLevel >= 20) HMAdvancements.trigger(player, "level_20");
+
             syncToClient(player, cap);
             ctx.getSource().sendSuccess(() -> Component.literal("§aNivel de hombre lobo ajustado a: " + newLevel),
                     true);
@@ -92,6 +98,7 @@ public class WerewolfCommand {
             ServerPlayer player = ctx.getSource().getPlayerOrException();
             WerewolfCapability cap = player.getData(WerewolfAttachment.WEREWOLF_DATA);
             cap.setWerewolf(true);
+            HMAdvancements.trigger(player, "became_werewolf");
             syncToClient(player, cap);
             ctx.getSource().sendSuccess(() -> Component.literal("§aAhora eres un hombre lobo."), true);
             return Command.SINGLE_SUCCESS;

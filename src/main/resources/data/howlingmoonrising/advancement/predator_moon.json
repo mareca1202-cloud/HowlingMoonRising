@@ -1,0 +1,26 @@
+{
+  "parent": "howlingmoonrising:get_path",
+  "display": {
+    "icon": {
+      "id": "minecraft:skeleton_skull"
+    },
+    "title": {
+      "translate": "advancements.howlingmoonrising.predator_moon.title"
+    },
+    "description": {
+      "translate": "advancements.howlingmoonrising.predator_moon.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "predator_moon": {
+      "trigger": "howlingmoonrising:generic",
+      "conditions": {
+        "id": "predator_moon"
+      }
+    }
+  }
+}
